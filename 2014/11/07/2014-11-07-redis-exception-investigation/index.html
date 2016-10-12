@@ -3,14 +3,27 @@
 <head>
   <meta charset="utf-8">
   
-  <title>kext&#39;s blog</title>
+  <title>Redis异常调查 | kext&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="kext's blog">
-<meta property="og:url" content="http://yoursite.com/index.html">
+  <meta name="description" content="问题今天同事让我协助调查一个redis的问题。他给我的异常信息如下：
+redis.clients.jedis.exceptions.JedisConnectionException: Could not get a resource from the pool
+乍一看信息感觉是pool满了，获取不到新的连接导致发生错误。
+原理找原因之前让我们先了解一下jedis获取redis连接的思路，redis">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis异常调查">
+<meta property="og:url" content="http://yoursite.com/2014/11/07/2014-11-07-redis-exception-investigation/index.html">
 <meta property="og:site_name" content="kext's blog">
+<meta property="og:description" content="问题今天同事让我协助调查一个redis的问题。他给我的异常信息如下：
+redis.clients.jedis.exceptions.JedisConnectionException: Could not get a resource from the pool
+乍一看信息感觉是pool满了，获取不到新的连接导致发生错误。
+原理找原因之前让我们先了解一下jedis获取redis连接的思路，redis">
+<meta property="og:updated_time" content="2016-10-12T02:33:28.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="kext's blog">
+<meta name="twitter:title" content="Redis异常调查">
+<meta name="twitter:description" content="问题今天同事让我协助调查一个redis的问题。他给我的异常信息如下：
+redis.clients.jedis.exceptions.JedisConnectionException: Could not get a resource from the pool
+乍一看信息感觉是pool满了，获取不到新的连接导致发生错误。
+原理找原因之前让我们先了解一下jedis获取redis连接的思路，redis">
   
     <link rel="alternate" href="/atom.xml" title="kext&#39;s blog" type="application/atom+xml">
   
@@ -63,109 +76,7 @@
   </div>
 </header>
       <div class="outer">
-        <section id="main">
-  
-    <article id="post-2015-01-09-java-actor-01" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2015/01/09/2015-01-09-java-actor-01/" class="article-date">
-  <time datetime="2015-01-09T07:30:12.000Z" itemprop="datePublished">2015-01-09</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2015/01/09/2015-01-09-java-actor-01/">Actor 01 - 消息传递 vs 共享内存</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h3 id="线程通信机制"><a href="#线程通信机制" class="headerlink" title="线程通信机制"></a>线程通信机制</h3><p>在讲解什么是actor之前，先来说说线程通信机制。我们知道，系统中执行任务的最小单元是线程，线程间的通讯一般有2种方式：</p>
-<ol>
-<li>共享内存</li>
-<li>消息传递</li>
-</ol>
-<p>共享内存就是不同线程访问同一个逻辑内存，而消息通讯就好比发短信，发邮件。</p>
-<h3 id="共享内存"><a href="#共享内存" class="headerlink" title="共享内存"></a>共享内存</h3><p>共享内存这种方式比较常见，经常会有一个共享变量，然后多个线程去操作同一个共享变量，从而达到线程通讯的目的。<br>例如，我们使用多个线程去执行页面抓取任务，我们可以使用一个共享变量count来记录任务完成的数量，每当一个线程完成抓取任务，会在原来的count上执行加1操作，这样每个线程都可以通过获取这个count变量来得知当前任务的完成情况，当然必须要考虑的是共享变量的同步问题（加锁）。<br><img src="/images/2015-01-09-java-actor-01-share-memory.png" alt=""></p>
-<p>这种通讯模型中，不同的线程之间是没有直接联系的，都是通过共享变量这个“中间人”来进行交互，而这个“中间人”有时还需被保护在临界区内（加锁）。由此可见，一旦共享变量变得多起来，并且涉及到多种不同线程对象的交互，这种方式极容易出现问题。</p>
-<h3 id="消息传递"><a href="#消息传递" class="headerlink" title="消息传递"></a>消息传递</h3><p>消息传递方式采取的是线程之间的直接通信，不同的线程之间通过显式的发送消息来达到交互目的。消息传递最有名的方式应该是actor模型了。<br>还是那面那个加1的例子，首先我们定义一个统计actor用来统计任务完成量，然后把多个网址（消息方式）发给多个抓取actor，抓取actor处理完任务后发送消息通知统计actor任务完成，统计actor对自己保存的变量count（统计actor私有）加1。<br><img src="/images/2015-01-09-java-actor-01-message.png" alt=""></p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ol>
-<li>共享内存，通过写-读共享内存来隐式进行通信，同步是显式进行的，互斥必须显式指定。</li>
-<li>消息传递，通过明确的发送消息来显式进行通信，消息的发送在消息的接收之前，同步是隐式进行的。</li>
-</ol>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://yoursite.com/2015/01/09/2015-01-09-java-actor-01/" data-id="ciu6c9k34000027tvus1e4tz1" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/高并发/">高并发</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-  
-    <article id="post-2014-11-08-git-rollback" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2014/11/08/2014-11-08-git-rollback/" class="article-date">
-  <time datetime="2014-11-08T07:28:12.000Z" itemprop="datePublished">2014-11-08</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2014/11/08/2014-11-08-git-rollback/">Git rollback</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>我使用git也已经有一年多的时间了，git做为版本控制工具用起来真的很舒服，简直爱不释手，其中一个很好的优点就是可以对git的一些命令进行回滚。</p>
-<h3 id="git提交代码的经典步骤"><a href="#git提交代码的经典步骤" class="headerlink" title="git提交代码的经典步骤"></a>git提交代码的经典步骤</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># 添加文件到缓存区</span></div><div class="line">git add test.txt</div><div class="line"><span class="comment"># 提交缓存区的文件到本地仓库 </span></div><div class="line">git commit -m <span class="string">"some comments"</span> </div><div class="line"><span class="comment"># 推送本地仓库的文件到服务端</span></div><div class="line">git push origin branchName</div></pre></td></tr></table></figure>
-<h3 id="实战操作"><a href="#实战操作" class="headerlink" title="实战操作"></a>实战操作</h3><p><img src="/images/2014-11-08-git-rollback.png" alt=""></p>
-<p>上图可以清晰的看到执行提交的每一个步骤以及提交之后的git状态。清楚了git的提交流程之后，接下来让我来演示如果对git的每一个提交操作进行回滚。</p>
-<h3 id="回滚本地操作"><a href="#回滚本地操作" class="headerlink" title="回滚本地操作"></a>回滚本地操作</h3><p>在回滚git add之前其实还有一个操作，就是修改操作，那么如何进行本地修改的回滚呢。<br>首先我对test.txt进行了修改：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">Administrator@USER-RNTBIT942O /e/repository/kext/<span class="built_in">test</span> (master)</div><div class="line">$ git diff test.txt</div><div class="line">diff --git a/test.txt b/test.txt</div><div class="line">index 493021b..8c8d0b8 100644</div><div class="line">--- a/test.txt</div><div class="line">+++ b/test.txt</div><div class="line">@@ -1 +1,2 @@</div><div class="line">this is a <span class="built_in">test</span> file</div><div class="line">+haha</div></pre></td></tr></table></figure></p>
-<p>执行git status之后其实可以看到git给出清晰的提示：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"> Administrator@USER-RNTBIT942O /e/repository/kext/<span class="built_in">test</span> (master)</div><div class="line">$ git status</div><div class="line"><span class="comment"># On branch master</span></div><div class="line"><span class="comment"># Changes not staged for commit:</span></div><div class="line"><span class="comment">#   (use "git add &lt;file&gt;..." to update what will be committed)</span></div><div class="line"><span class="comment">#   (use "git checkout -- &lt;file&gt;..." to discard changes in working directory)</span></div><div class="line"><span class="comment">#</span></div><div class="line"><span class="comment">#       modified:   test.txt</span></div><div class="line"><span class="comment">#</span></div><div class="line">no changes added to commit (use <span class="string">"git add"</span> and/or <span class="string">"git commit -a"</span>)</div></pre></td></tr></table></figure></p>
-<p>用git checkout – test.txt可以回滚本地提交。（假如是新建文件直接删了就可以了）</p>
-<h3 id="回滚git-add"><a href="#回滚git-add" class="headerlink" title="回滚git add"></a>回滚git add</h3><p>对git add 有两种回滚的情况：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># 1. 回滚新建文件</span></div><div class="line">git rm --cached test.txt</div><div class="line"><span class="comment"># 2. 回滚修改文件</span></div><div class="line">git reset HEAD test.txt</div></pre></td></tr></table></figure></p>
-<h3 id="回滚git-commit"><a href="#回滚git-commit" class="headerlink" title="回滚git commit"></a>回滚git commit</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">Administrator@USER-RNTBIT942O /e/repository/kext/<span class="built_in">test</span> (master)</div><div class="line">$ git commit -m <span class="string">"change test.txt"</span></div><div class="line">[master 7dbf306] change test.txt</div><div class="line"> 1 file changed, 1 insertion(+)</div><div class="line">Administrator@USER-RNTBIT942O /e/repository/kext/<span class="built_in">test</span> (master)</div><div class="line">$ git status</div><div class="line"><span class="comment"># On branch master</span></div><div class="line"><span class="comment"># Your branch is ahead of 'origin/master' by 1 commit.</span></div><div class="line"><span class="comment">#   (use "git push" to publish your local commits)</span></div><div class="line"><span class="comment">#</span></div><div class="line">nothing to commit, working directory clean</div></pre></td></tr></table></figure>
-<p>这时候我们看到git commit后的status只提示use git push to publish your local commits，而没有任何回滚提示，但其实git commit是可以回滚的。<br>这里需要用到git reset命令，关于git reset命令的具体用法我会另开一篇博文详细讲解。<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># 回滚git commit</span></div><div class="line"><span class="comment"># 把HEAD指针指向前一个提交</span></div><div class="line">git reset --soft HEAD~1</div></pre></td></tr></table></figure></p>
-<h3 id="回滚git-push"><a href="#回滚git-push" class="headerlink" title="回滚git push"></a>回滚git push</h3><p>这是一个危险的动作，谨慎操作！！<br>其实回滚git push就是在回滚git commit的前提下执行强制推送，具体步骤如下：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># 回滚git commit</span></div><div class="line"><span class="comment"># 把HEAD指针指向前一个提交，并且回滚掉index和编辑区的修改</span></div><div class="line">git reset --hard HEAD~1</div><div class="line"><span class="comment"># 强制推送到远程仓库</span></div><div class="line">git push <span class="_">-f</span> origin</div></pre></td></tr></table></figure></p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://yoursite.com/2014/11/08/2014-11-08-git-rollback/" data-id="ciu6c9k38000127tvfhs5okvt" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/git/">git</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-  
-    <article id="post-2014-11-07-redis-exception-investigation" class="article article-type-post" itemscope itemprop="blogPost">
+        <section id="main"><article id="post-2014-11-07-redis-exception-investigation" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2014/11/07/2014-11-07-redis-exception-investigation/" class="article-date">
   <time datetime="2014-11-07T07:01:18.000Z" itemprop="datePublished">2014-11-07</time>
@@ -178,8 +89,8 @@
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2014/11/07/2014-11-07-redis-exception-investigation/">Redis异常调查</a>
+    <h1 class="article-title" itemprop="name">
+      Redis异常调查
     </h1>
   
 
@@ -268,100 +179,28 @@ tmpfs 24G 0 24G 0% /dev/shm
     </footer>
   </div>
   
-</article>
-
-
+    
+<nav id="article-nav">
   
-    <article id="post-2014-10-19-hello-github-page" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2014/10/19/2014-10-19-hello-github-page/" class="article-date">
-  <time datetime="2014-10-19T13:49:12.000Z" itemprop="datePublished">2014-10-19</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
+    <a href="/2014/11/08/2014-11-08-git-rollback/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
         
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2014/10/19/2014-10-19-hello-github-page/">Hello Github page</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>今天，2014年10月19号，开始在GitHub Page开启Blog。。</p>
-<p>这里的文章除了特别说明为 [转载] 之外，均为本人原创，转载请说明出处。</p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://yoursite.com/2014/10/19/2014-10-19-hello-github-page/" data-id="ciu6c9k3d000327tv32kef1t7" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/杂谈/">杂谈</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-  
-    <article id="post-2014-04-11-git-reset" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2014/04/11/2014-04-11-git-reset/" class="article-date">
-  <time datetime="2014-04-11T02:38:39.000Z" itemprop="datePublished">2014-04-11</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
+          Git rollback
         
+      </div>
+    </a>
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2014/04/11/2014-04-11-git-reset/">git reset 学习</a>
-    </h1>
   
+    <a href="/2014/10/19/2014-10-19-hello-github-page/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Hello Github page</div>
+    </a>
+  
+</nav>
 
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>昨天在重构同事的代码后，统一了命名和配置，在提交代码的时候不小心把一部分先提交了(git commit)(那时候已经有点头晕了，所以切忌别在头晕不清醒的情况下提交改动量大的代码)，其实这时候再提交另外一部分是没问题的，但是这样就显得不那么完美了，对于一个有洁癖的程序员来说是不可以接受的，所以我决定回滚上一个commit，再让它和未提交的代码一起提交成为一个完成的提交。</p>
-<p>这里就要学习git reset这个命令了，git reset意思是撤销某次提交，如果有下面3次提交：</p>
-<p>commit 3 : add test3</p>
-<p>commit 2 : add test2</p>
-<p>commit 1 : add test1</p>
-<p>这时候执行git reset –soft HEAD~1，意思是撤销上一个commit，就是把HEAD指针向上移动了一个位置。</p>
-<p>这时候会发现commit 3没有了，执行git reflog可以看到更多信息。</p>
-<p>让我们看看reset的参数的含义：</p>
-<p>–soft 只撤销commit，不移除index和working tree文件(本地修改)</p>
-<p>–mixed 默认值，撤销commit和移除index，不移除working tree文件</p>
-<p>–hard 撤销commit，移除index和working tree文件，最好还是不要用这个参数。</p>
-<p>其实git reset与git push -f一起使用会强制回滚服务端的提交，但是不建议这么使用。</p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://yoursite.com/2014/04/11/2014-04-11-git-reset/" data-id="ciu6c9k3k000427tvnfcjpkuv" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/git/">git</a></li></ul>
-
-    </footer>
-  </div>
   
 </article>
-
-
-  
 
 </section>
         
