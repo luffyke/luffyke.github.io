@@ -386,9 +386,8 @@ blockquote, .stressed {
 blockquote::before, .stressed-quote::before {
   content: "\201C";
   display: block;
-  font-family: times;
   font-style: normal;
-  font-size: 48px;
+  font-size: 24px;
   color: #444;
   font-weight: bold;
   line-height: 30px;
