@@ -1,0 +1,76 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description"><title>Java基础01-线程和锁 | 十八口丁</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=0.0.0"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/normalize/7.0.0/normalize.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/1.0.0/pure-min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/1.0.0/grids-responsive-min.css"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">Java基础01-线程和锁</h1><a id="logo" href="/.">十八口丁</a><p class="description">学无止境</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/atom.xml"><i class="fa fa-rss"> 订阅</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">Java基础01-线程和锁</h1><div class="post-meta">May 8, 2019</div><div class="post-content"><blockquote>
+<p>JDK版本为8</p>
+</blockquote>
+<h3 id="ThreadPoolExecutor有几个参数？"><a href="#ThreadPoolExecutor有几个参数？" class="headerlink" title="ThreadPoolExecutor有几个参数？"></a>ThreadPoolExecutor有几个参数？</h3><p>有6个，分别是：</p>
+<ul>
+<li>corePoolSize，线程池中的线程数（这个数包含空闲线程，除非allowCoreThreadTimeOut设置为true）</li>
+<li>maximumPoolSize，线程池的最大线程数</li>
+<li>keepAliveTime，线程存活保持时间</li>
+<li>workQueue，任务队列</li>
+<li>threadFactory，线程工厂</li>
+<li>handler，线程饱和策略</li>
+</ul>
+<p>具体参考<a href="http://kexitang.me/2016/08/08/2016-08-08-executor-01" target="_blank" rel="noopener">JDK线程池-概述</a></p>
+<h3 id="Executors工具类有哪几种构造线程池的方法？"><a href="#Executors工具类有哪几种构造线程池的方法？" class="headerlink" title="Executors工具类有哪几种构造线程池的方法？"></a>Executors工具类有哪几种构造线程池的方法？</h3><p>有5分钟，分别是：</p>
+<p><strong>newFixedThreadPool，创建一个固定线程数的线程池</strong></p>
+<ul>
+<li>它是一种固定大小的线程池；</li>
+<li>corePoolSize和maximunPoolSize都为用户设定的线程数量nThreads；</li>
+<li>keepAliveTime为0，意味着一旦有多余的空闲线程，就会被立即停止掉；</li>
+<li>阻塞队列采用了LinkedBlockingQueue，它是一个无界队列；由于阻塞队列是一个无界队列，因此永远不可能拒绝任务。</li>
+</ul>
+<p><strong>newCachedThreadPool</strong></p>
+<ul>
+<li>它是一个可以无限扩大的线程池；</li>
+<li>它比较适合处理执行时间比较小的任务；</li>
+<li>corePoolSize为0，maximumPoolSize为无限大，意味着线程数量可以无限大；</li>
+<li>keepAliveTime为60S，意味着线程空闲时间超过60S就会被杀死；</li>
+<li>采用SynchronousQueue装等待的任务，这个阻塞队列没有存储空间，这意味着只要有请求到来，就必须要找到一条工作线程处理他，如果当前没有空闲的线程，那么就会再创建一条新的线程。</li>
+</ul>
+<p><strong>newScheduledThreadPool</strong></p>
+<ul>
+<li>用来处理延时任务或者定时任务</li>
+</ul>
+<p><strong>newSingleThreadExecutor</strong></p>
+<ul>
+<li>它只会创建一条工作线程处理任务；</li>
+<li>采用的阻塞队列为LinkedBlockingQueue。</li>
+</ul>
+<p><strong>newWorkStealingPool</strong></p>
+<ul>
+<li>创建一个带并行级别的线程池，并行级别决定了同一时刻最多有多少个线程在执行，默认为当前系统的CPU个数。</li>
+</ul>
+<h3 id="Java中的锁，synchronized和lock有什么区别？分别有什么应用场景？"><a href="#Java中的锁，synchronized和lock有什么区别？分别有什么应用场景？" class="headerlink" title="Java中的锁，synchronized和lock有什么区别？分别有什么应用场景？"></a>Java中的锁，synchronized和lock有什么区别？分别有什么应用场景？</h3><ul>
+<li>synchronized是关键字，Lock是接口</li>
+<li>synchronized是JVM释放锁，Lock需要手动释放锁</li>
+<li>synchronized可重入，不可中断，非公平，Lock可重入，可中断，可公平</li>
+</ul>
+<h3 id="轻量级锁？"><a href="#轻量级锁？" class="headerlink" title="轻量级锁？"></a>轻量级锁？</h3><ul>
+<li>synchronized锁的状态有3种，偏向锁，轻量级锁，重量级锁</li>
+<li>偏向锁是指一段同步代码一直被一个线程所访问，那么该线程会自动获取锁。降低获取锁的代价</li>
+<li>轻量级锁是指当锁是偏向锁的时候，被另一个线程所访问，偏向锁就会升级为轻量级锁，其他线程会通过自旋的形式尝试获取锁，不会阻塞，提高性能</li>
+<li>重量级锁是指当锁为轻量级锁的时候，另一个线程虽然是自旋，但自旋不会一直持续下去，当自旋一定次数的时候，还没有获取到锁，就会进入阻塞，该锁膨胀为重量级锁。重量级锁会让其他申请的线程进入阻塞，性能降低。</li>
+</ul>
+<h3 id="无锁线程安全？"><a href="#无锁线程安全？" class="headerlink" title="无锁线程安全？"></a>无锁线程安全？</h3><ul>
+<li>final，定义为final的变量天然线程安全</li>
+<li>Automic类，利用硬件提供的CAS功能</li>
+</ul>
+<h3 id="Java内存模型？"><a href="#Java内存模型？" class="headerlink" title="Java内存模型？"></a>Java内存模型？</h3><ul>
+<li>主内存，JMM规定所有变量都存储在主内存，主内存是共享内存区域，所有线程都可以访问</li>
+<li>工作内存，JVM为每个线程创建的内存空间，线程对变量的操作(读取赋值等)必须在工作内存中进行，首先要将变量从主内存拷贝的自己的工作内存空间，然后对变量进行操作，操作完成后再将变量写回主内存，不能直接操作主内存中的变量，工作内存中存储着主内存中的变量副本拷贝</li>
+</ul>
+<h3 id="volatile关键字作用？"><a href="#volatile关键字作用？" class="headerlink" title="volatile关键字作用？"></a>volatile关键字作用？</h3><ul>
+<li>内存可见性，意思就是如果一个变量定义为volatile，如果一个线程改变了该变量值，其他线程会直接得到变量最新值，一般用在状态位的控制。</li>
+<li>禁止指令重排序优化</li>
+</ul>
+<h3 id="happen-before原则？"><a href="#happen-before原则？" class="headerlink" title="happen before原则？"></a>happen before原则？</h3><ul>
+<li>程序顺序原则，即在一个线程内必须保证语义串行性，也就是说按照代码顺序执行。</li>
+<li>锁规则，解锁(unlock)操作必然发生在后续的同一个锁的加锁(lock)之前，也就是说，如果对于一个锁解锁后，再加锁，那么加锁的动作必须在解锁动作之后(同一个锁)。</li>
+<li>volatile规则，volatile变量的写，先发生于读，这保证了volatile变量的可见性，简单的理解就是，volatile变量在每次被线程访问时，都强迫从主内存中读该变量的值，而当该变量发生变化时，又会强迫将最新的值刷新到主内存，任何时刻，不同的线程总是能够看到该变量的最新值。</li>
+<li>线程启动规则，线程的start()方法先于它的每一个动作，即如果线程A在执行线程B的start方法之前修改了共享变量的值，那么当线程B执行start方法时，线程A对共享变量的修改对线程B可见</li>
+<li>传递性，A先于B ，B先于C 那么A必然先于C</li>
+<li>线程终止规则，线程的所有操作先于线程的终结，Thread.join()方法的作用是等待当前执行的线程终止。假设在线程B终止之前，修改了共享变量，线程A从线程B的join方法成功返回后，线程B对共享变量的修改将对线程A可见。</li>
+<li>线程中断规则，对线程 interrupt()方法的调用先行发生于被中断线程的代码检测到中断事件的发生，可以通过Thread.interrupted()方法检测线程是否中断。</li>
+<li>对象终结规则，对象的构造函数执行，结束先于finalize()方法</li>
+</ul>
+</div><div class="tags"><a href="/tags/Java/">Java</a></div><div class="post-nav"><a class="next" href="/2019/04/03/2019-04-03-ARTS0/">ARTS0</a></div></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.google.com/search" method="get" accept-charset="utf-8" target="_blank"><input type="text" name="q" maxlength="20" placeholder="Search"/><input type="hidden" name="sitesearch" value="http://yoursite.com"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-folder-o"> 分类</i></div></div><div class="widget"><div class="widget-title"><i class="fa fa-star-o"> 标签</i></div><div class="tagcloud"><a href="/tags/高并发/" style="font-size: 15px;">高并发</a> <a href="/tags/Actor/" style="font-size: 15px;">Actor</a> <a href="/tags/ARTS/" style="font-size: 15px;">ARTS</a> <a href="/tags/Java/" style="font-size: 15px;">Java</a> <a href="/tags/JDK/" style="font-size: 15px;">JDK</a></div></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2019/05/08/2019-05-08-java01/">Java基础01-线程和锁</a></li><li class="post-list-item"><a class="post-list-link" href="/2019/04/03/2019-04-03-ARTS0/">ARTS0</a></li><li class="post-list-item"><a class="post-list-link" href="/2019/04/01/2019-04-01-ARTS/">ARTS介绍</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/08/2016-08-08-executor-01/">JDK线程池 01 - 概述</a></li><li class="post-list-item"><a class="post-list-link" href="/2015/01/09/2015-01-09-java-actor-01/">Actor 01 - 消息传递 vs 共享内存</a></li></ul></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2019 <a href="/." rel="nofollow">十八口丁.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=0.0.0" async></script><script type="text/javascript" src="//cdn.bootcss.com/fancybox/3.2.5/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.0" async></script><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/3.2.5/jquery.fancybox.min.css"><script type="text/javascript" src="/js/codeblock-resizer.js?v=0.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=0.0.0"></script></div></body></html>
